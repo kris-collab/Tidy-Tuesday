@@ -1,0 +1,50 @@
+library(ggtext)
+library(showtext)
+library(tidyr)
+library(tidytuesdayR)
+library(dplyr)
+library(tidyverse)
+
+
+#Set aesthetics
+font_add_google(name = "Recursive", family = 'recursive')
+font_add_google(name = "Roboto Slab", family = "roboto slab")
+showtext_auto()
+bg <- "#d1c9c0"
+plot_col <- "#5ca5be"
+text_col <- "#3c4347"
+
+#Import Data
+tt <- tidytuesdayR::tt_load('2022-09-27')
+tt <- tidytuesdayR::tt_load(2022, week = 39)
+artists <- tt$artists
+head(artists)
+
+#Data wrangle
+d1 <- artists %>%
+  group_by(type) %>%
+  summarise(total = sum(artists_n, na.rm = TRUE)) 
+
+#Plot Data
+p1 <- d1 %>%
+  ggplot(aes(x = reorder(type, +total), y = total, fill=total)) +
+  geom_bar(stat="identity") +
+  geom_col(fill = plot_col) +
+  coord_flip() +
+  scale_y_continuous(labels = scales::comma) +
+  geom_text(
+    aes(label = format(total, big.mark = ",")),
+    hjust = 1.1, fontface = "bold",
+    color = "white", size = 3,
+    vjust = 1.0, position = position_dodge(1.0)) +
+    labs(x = "Type of Artist", y = "Total Number of Artists", title = "Types of Artists", caption = "K.Smith | Data: arts.gov")+
+  theme(axis.ticks = element_blank(),axis.title.x = element_text(size = 10, color = text_col),
+    axis.text.x = element_text(size = 10, color = text_col), axis.text.y = element_text(size=10, color=text_col),
+    axis.title.y = element_text(size=10, color=text_col), plot.title = element_text(size=12,color=text_col, face="bold", margin = margin(20, 0, 10, 50)),
+    plot.caption = element_text(size = 10, color=text_col,hjust = .5, margin = margin(20, 0, 10, 50)),
+    plot.background = element_rect(fill = bg, color=bg), panel.background = element_rect(fill = bg, color = bg),
+    panel.grid = element_blank(), legend.position = "none")
+plot(p1)
+
+#Save plot
+ggsave("2022_Week39.png", height = 7, width = 9.73, bg=bg)
