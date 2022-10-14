@@ -4,13 +4,19 @@ library(tidyr)
 library(tidytuesdayR)
 library(dplyr)
 library(tidyverse)
-library(scico)
+library(ggplot2)
 
-yarn <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2022/2022-10-11/yarn.csv')
 
-url <- "https://github.com/rfordatascience/tidytuesday/raw/master/data/2022/2022-10-11/yarn.csv"
-yarn <- readr::read_csv(file = url)
+tuesdata <- tidytuesdayR::tt_load('2022-10-11')
+tuesdata <- tidytuesdayR::tt_load(2022, week = 41)
 
+yarn <- tuesdata$yarn
+
+
+font_add_google(name = "Roboto Slab", family = "roboto slab")
+showtext_auto()
+bg <- "#d4bccb"
+text_col <- "#16101e"
 #Brands with highest ratings by texture
 
 data <- yarn %>%
@@ -25,14 +31,22 @@ data <- yarn %>%
 plot <- data %>%
   ggplot() +
     geom_hline(yintercept = 0) +
-    geom_point(aes(x=reorder(yarn_company_name, -rating_count), y=rating_count, color=yarn_company_name)) +
+    geom_point(aes(x=reorder(yarn_company_name, -rating_count), y=rating_count, fill=yarn_company_name),size=4) +
     geom_segment(aes(x=yarn_company_name, xend = yarn_company_name,
-                     y = 0,yend=rating_count, color=yarn_company_name)) +
-  scale_y_continuous(limits=c(0,200000), breaks=seq(0,200000,100000),expand=c(0,0)) +
-  scale_fill_manual(values=c("blue")) +
-    theme(panel.background = element_rect(fill = "#e8e8e4", color = "#e8e8e4"),
-      plot.background = element_rect(fill = "#e8e8e4", color = "#e8e8e4"),
+                     y = 0,yend=rating_count,fill=yarn_company_name),size=1) +
+  scale_fill_manual(values=c("#16101e","#16101e","#16101e","#16101e","#16101e","#16101e","#16101e","#16101e","#16101e","#16101e")) +
+  labs(x="Brand", y="Number of Ratings", caption = "K.Smith | Data: ravelRy", title="Top 10 Brands by Rating Count") +
+    theme(panel.background = element_rect(fill = bg, color = bg),
+      plot.background = element_rect(fill = bg, color = bg),
       panel.grid = element_blank(), legend.position = "none",
       axis.title=element_blank(),
-      axis.ticks=element_blank())
+      axis.ticks=element_blank(),
+      axis.text.x = element_text(size = 30, color=text_col,angle=90),
+      axis.text.y = element_text(size = 30, color=text_col,margin = margin(20,0,10,20)),
+      axis.title.x = element_text(size = 35, color=text_col,margin = margin(20,0,10,20)),
+      axis.title.y = element_text(size = 35, color=text_col,margin = margin(200,0,10,40)),
+      plot.caption = element_text(size = 30, color=text_col,margin = margin(20,0,10,20),hjust = .5),
+      plot.title=element_text(size=40,face="bold", color=text_col,margin = margin(20,0,10,20),hjust=.5))
 plot(plot)
+
+ggsave("TidyTuesday41.png", height = 8, width = 12, bg=bg)
