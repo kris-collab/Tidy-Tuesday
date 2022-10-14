@@ -1,0 +1,38 @@
+library(ggtext)
+library(showtext)
+library(tidyr)
+library(tidytuesdayR)
+library(dplyr)
+library(tidyverse)
+library(scico)
+
+yarn <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2022/2022-10-11/yarn.csv')
+
+url <- "https://github.com/rfordatascience/tidytuesday/raw/master/data/2022/2022-10-11/yarn.csv"
+yarn <- readr::read_csv(file = url)
+
+#Brands with highest ratings by texture
+
+data <- yarn %>%
+  group_by(yarn_company_name) %>%
+  select(yarn_company_name, rating_count, rating_average, discontinued) %>%
+  filter(discontinued != "True") %>%
+  summarise(rating_count = sum(rating_count, na.rm=TRUE)) %>%
+  na.omit(data$rating_count) %>%
+  top_n(10) %>%
+  arrange(desc(rating_count))
+
+plot <- data %>%
+  ggplot() +
+    geom_hline(yintercept = 0) +
+    geom_point(aes(x=reorder(yarn_company_name, -rating_count), y=rating_count, color=yarn_company_name)) +
+    geom_segment(aes(x=yarn_company_name, xend = yarn_company_name,
+                     y = 0,yend=rating_count, color=yarn_company_name)) +
+  scale_y_continuous(limits=c(0,200000), breaks=seq(0,200000,100000),expand=c(0,0)) +
+  scale_fill_manual(values=c("blue")) +
+    theme(panel.background = element_rect(fill = "#e8e8e4", color = "#e8e8e4"),
+      plot.background = element_rect(fill = "#e8e8e4", color = "#e8e8e4"),
+      panel.grid = element_blank(), legend.position = "none",
+      axis.title=element_blank(),
+      axis.ticks=element_blank())
+plot(plot)
