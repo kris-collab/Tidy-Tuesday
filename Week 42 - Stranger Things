@@ -1,0 +1,72 @@
+library(tidyverse)
+library(tidytext)
+library(showtext)
+library(textdata)
+library(ggfx)
+library(ggplot2)
+
+
+#aesthetics
+font_add_google("Heebo", "heebo")
+font_add_google("Libre Baskerville", "lb")
+showtext_auto()
+bg <- "#101010"
+p1_text <- "#ff112a"
+p1_point <- "#005ca0"
+
+# Load data ----
+episodes <- readr::read_csv(
+  "https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2022/2022-10-18/episodes.csv")
+dialogue <- readr::read_csv(
+  "https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2022/2022-10-18/stranger_things_all_dialogue.csv")
+
+# Wrangle Data
+d_clean <- dialogue %>%
+  select(dialogue, season) %>%
+  unnest_tokens(word, dialogue) %>%
+  anti_join(get_stopwords(),by="word") %>%
+  na.omit()
+
+bing <- get_sentiments("bing")
+
+d_join <- d_clean %>%
+  inner_join(bing,by="word")
+
+#Top 10 negative words
+top_10_n <- most_common_w %>%
+  group_by(sentiment) %>%
+  filter(sentiment=="negative") %>%
+  top_n(10) %>%
+  arrange(desc(n))
+
+# plot Positive vs Negative season 
+p1 <- top_10_n %>%
+  ggplot(aes(x=reorder(word,n), y=n,yend=0,xend=word),fill=n,colour=n) +
+  with_outer_glow(geom_segment(color="white",alpha=1.0),colour=p1_point,
+                  sigma=5,expand=1) +
+    with_outer_glow(
+        with_inner_glow(geom_point(size=3,alpha=0.90,color=p1_point),color="white",sigma=1),
+                        colour="white",sigma=1) +
+  geom_text(aes(label=n),
+            color=p1_text,hjust=-0.7,
+            family="heebo") +
+  coord_flip() +
+  labs(title="Top 10 Negative Words Mentioned in Stranger Things Season 1-4",
+       caption="K.Smith | data: 8flix.com") +
+    theme(panel.grid=element_blank(),
+        plot.background = element_rect(fill=bg,color=bg),
+        panel.background = element_rect(fill=bg,color=bg),
+        axis.title.y = element_blank(),
+        axis.title.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.text.y = element_text(size=12, color=p1_text,family="heebo"),
+        plot.title = element_text(size=18,color=p1_text,margin = margin(20,0,30,20), family="heebo"),
+        plot.caption = element_text(size=12,color=p1_text,hjust=.5,margin = margin(20,0,0,0),family="heebo"),
+        axis.ticks = element_blank(),
+        plot.margin = margin(50,0,50,50))
+plot(p1)
+
+showtext_opts(dpi = 320) 
+
+ggsave("StrangerThings.png",height = 7.95, width = 14, bg=bg)
+
